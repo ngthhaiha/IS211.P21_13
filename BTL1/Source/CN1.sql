@@ -399,3 +399,28 @@ EXCEPTION
   WHEN NO_DATA_FOUND THEN
     RAISE_APPLICATION_ERROR(-20002, 'Không tìm thấy sản phẩm trong tồn kho tại chi nhánh.');
 END;
+
+
+
+---------------------------------------------------------------------------------------------------------------
+CREATE OR REPLACE TRIGGER update_inventory_after_selling 
+AFTER INSERT ON CTHD 
+FOR EACH ROW 
+
+DECLARE 
+  v_machinhanh NHANVIEN_PUBLIC.MACHINHANH%TYPE; 
+
+BEGIN 
+  SELECT NV.MACHINHANH INTO v_machinhanh 
+  FROM HOADON H 
+  JOIN NHANVIEN_PUBLIC NV ON H.MANV = NV.MANV 
+  WHERE H.MAHD = :NEW.MAHD; 
+  UPDATE TONKHO 
+  SET SOLUONG = SOLUONG - :NEW.SOLUONG, 
+      TINHTRANG = CASE 
+                    WHEN SOLUONG - :NEW.SOLUONG <= 0 THEN 'Hết Hàng' 
+                    ELSE 'Còn Hàng' 
+                  END, 
+      NGAYCAPNHAT = SYSDATE 
+  WHERE MASP = :NEW.MASP AND MACHINHANH = v_machinhanh; 
+END;
