@@ -1,0 +1,189 @@
+﻿----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/*===================================================================================TỐI ƯU TRUY VẤN========================================================================================================*/
+----------------------------------------------------------------------------------CÂU TRUY VẤN BAN ĐẦU -----------------------------------------------------------------------------
+EXPLAIN PLAN FOR
+SELECT *
+FROM (
+  -- CN1
+  SELECT 
+    H.MAHD AS MAHD,
+    SP.TENSANPHAM AS TENSANPHAM,
+    C.SOLUONG AS SOLUONG,
+    KH.HOTEN AS TEN_KHACH,
+    KH.DIACHI AS DIACHI_KH,
+    H.TONGTIEN AS TONGTIEN,
+    H.NGAYTAO AS NGAYTAO,
+    NV.MACHINHANH AS MACHINHANH,
+    H.ISDELETE AS HD_DEL,
+    C.ISDELETE AS CTHD_DEL,
+    SP.ISDELETE AS SP_DEL,
+    KH.ISDELETE AS KH_DEL,
+    NV.ISDELETE AS NV_DEL,
+    SP.THUONGHIEU AS THUONGHIEU
+  FROM CN1.HOADON H, CN1.CTHD C, CN1.SANPHAM SP, CN1.KHACHHANG KH, CN1.NHANVIEN_PUBLIC NV  
+  WHERE H.MAHD = C.MAHD AND C.MASP = SP.MASP 
+    AND H.MAKH = KH.MAKH AND H.MANV = NV.MANV
+
+  UNION ALL
+
+  -- CN2
+  SELECT 
+    H.MAHD, SP.TENSANPHAM, C.SOLUONG,
+    KH.HOTEN, KH.DIACHI, H.TONGTIEN, H.NGAYTAO, NV.MACHINHANH,
+    H.ISDELETE, C.ISDELETE, SP.ISDELETE, KH.ISDELETE, NV.ISDELETE,
+    SP.THUONGHIEU
+  FROM CN2.HOADON@CN2_GiamDoc H, CN2.CTHD@CN2_GiamDoc C,
+       CN2.SANPHAM@CN2_GiamDoc SP, CN2.KHACHHANG@CN2_GiamDoc KH,
+       CN2.NHANVIEN_PUBLIC@CN2_GiamDoc NV
+  WHERE H.MAHD = C.MAHD AND C.MASP = SP.MASP 
+    AND H.MAKH = KH.MAKH AND H.MANV = NV.MANV
+
+  UNION ALL
+
+  -- CN3
+  SELECT 
+    H.MAHD, SP.TENSANPHAM, C.SOLUONG,
+    KH.HOTEN, KH.DIACHI, H.TONGTIEN, H.NGAYTAO, NV.MACHINHANH,
+    H.ISDELETE, C.ISDELETE, SP.ISDELETE, KH.ISDELETE, NV.ISDELETE,
+    SP.THUONGHIEU
+  FROM CN3.HOADON@CN3_GiamDoc H, CN3.CTHD@CN3_GiamDoc C,
+       CN3.SANPHAM@CN3_GiamDoc SP, CN3.KHACHHANG@CN3_GiamDoc KH,
+       CN3.NHANVIEN_PUBLIC@CN3_GiamDoc NV
+  WHERE H.MAHD = C.MAHD AND C.MASP = SP.MASP 
+    AND H.MAKH = KH.MAKH AND H.MANV = NV.MANV
+)
+WHERE HD_DEL = 0 AND CTHD_DEL = 0 AND SP_DEL = 0 
+  AND KH_DEL = 0 AND NV_DEL = 0
+  AND TONGTIEN > 5000000 
+  AND EXTRACT(YEAR FROM NGAYTAO) = 2024 
+  AND THUONGHIEU = 'Yonex' 
+  AND MACHINHANH = 'CN1';
+
+-- Xem kế hoạch thực thi
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
+
+
+/*===============================================================================================================================================================================================*/
+--------------------------------------------------------------- CÂU TRUY VẤN SAU KHI TỐI ƯU -----------------------------------------------------------------------------
+EXPLAIN PLAN FOR
+SELECT *
+FROM (
+  -- CN1
+  SELECT H.MAHD, SP.TENSANPHAM, C.SOLUONG, KH.HOTEN, KH.DIACHI, H.TONGTIEN, H.NGAYTAO
+  FROM 
+    (SELECT MAHD, TONGTIEN, NGAYTAO, MAKH, MANV 
+     FROM CN1.HOADON 
+     WHERE ISDELETE = 0 AND TONGTIEN > 5000000 AND EXTRACT(YEAR FROM NGAYTAO) = 2024) H,
+    
+    (SELECT MAKH, HOTEN, DIACHI 
+     FROM CN1.KHACHHANG 
+     WHERE ISDELETE = 0) KH,
+    
+    (SELECT MAHD, MASP, SOLUONG 
+     FROM CN1.CTHD 
+     WHERE ISDELETE = 0) C,
+    
+    (SELECT MASP, TENSANPHAM 
+     FROM CN1.SANPHAM 
+     WHERE ISDELETE = 0 AND THUONGHIEU = 'Yonex') SP,
+    
+    (SELECT MANV 
+     FROM CN1.NHANVIEN_PUBLIC 
+     WHERE ISDELETE = 0 AND MACHINHANH = 'CN1') NV
+  WHERE H.MAHD = C.MAHD AND C.MASP = SP.MASP AND H.MAKH = KH.MAKH AND H.MANV = NV.MANV
+
+  UNION ALL
+
+  -- CN2
+  SELECT H.MAHD, SP.TENSANPHAM, C.SOLUONG, KH.HOTEN, KH.DIACHI, H.TONGTIEN, H.NGAYTAO
+  FROM 
+    (SELECT MAHD, TONGTIEN, NGAYTAO, MAKH, MANV 
+     FROM CN2.HOADON@CN2_GiamDoc 
+     WHERE ISDELETE = 0 AND TONGTIEN > 5000000 AND EXTRACT(YEAR FROM NGAYTAO) = 2024) H,
+    
+    (SELECT MAKH, HOTEN, DIACHI 
+     FROM CN2.KHACHHANG@CN2_GiamDoc 
+     WHERE ISDELETE = 0) KH,
+    
+    (SELECT MAHD, MASP, SOLUONG 
+     FROM CN2.CTHD@CN2_GiamDoc 
+     WHERE ISDELETE = 0) C,
+    
+    (SELECT MASP, TENSANPHAM 
+     FROM CN2.SANPHAM@CN2_GiamDoc 
+     WHERE ISDELETE = 0 AND THUONGHIEU = 'Yonex') SP,
+    
+    (SELECT MANV 
+     FROM CN2.NHANVIEN_PUBLIC@CN2_GiamDoc 
+     WHERE ISDELETE = 0 AND MACHINHANH = 'CN1') NV
+  WHERE H.MAHD = C.MAHD AND C.MASP = SP.MASP AND H.MAKH = KH.MAKH AND H.MANV = NV.MANV
+
+  UNION ALL
+
+  -- CN3
+  SELECT H.MAHD, SP.TENSANPHAM, C.SOLUONG, KH.HOTEN, KH.DIACHI, H.TONGTIEN, H.NGAYTAO
+  FROM 
+    (SELECT MAHD, TONGTIEN, NGAYTAO, MAKH, MANV 
+     FROM CN3.HOADON@CN3_GiamDoc 
+     WHERE ISDELETE = 0 AND TONGTIEN > 5000000 AND EXTRACT(YEAR FROM NGAYTAO) = 2024) H,
+    
+    (SELECT MAKH, HOTEN, DIACHI 
+     FROM CN3.KHACHHANG@CN3_GiamDoc 
+     WHERE ISDELETE = 0) KH,
+    
+    (SELECT MAHD, MASP, SOLUONG 
+     FROM CN3.CTHD@CN3_GiamDoc 
+     WHERE ISDELETE = 0) C,
+    
+    (SELECT MASP, TENSANPHAM 
+     FROM CN3.SANPHAM@CN3_GiamDoc 
+     WHERE ISDELETE = 0 AND THUONGHIEU = 'Yonex') SP,
+    
+    (SELECT MANV 
+     FROM CN3.NHANVIEN_PUBLIC@CN3_GiamDoc 
+     WHERE ISDELETE = 0 AND MACHINHANH = 'CN1') NV
+  WHERE H.MAHD = C.MAHD AND C.MASP = SP.MASP AND H.MAKH = KH.MAKH AND H.MANV = NV.MANV
+);
+
+
+-- Xem kế hoạch thực thi
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
+
+
+
+
+/*===============================================================================================================================================================================================*/
+---------------------------------------------------- CÂU TRUY VẤN SAU KHI RÚT GỌN TRÊN CÁC MẢNH -------------------------------
+EXPLAIN PLAN FOR
+SELECT H.MAHD, SP.TENSANPHAM, C.SOLUONG, KH.HOTEN AS TEN_KHACH, 
+  KH.DIACHI AS DIACHI_KH, H.TONGTIEN, H.NGAYTAO
+FROM 
+  (SELECT MAHD, TONGTIEN, NGAYTAO, MAKH 
+   FROM CN1.HOADON 
+   WHERE ISDELETE = 0 
+     AND TONGTIEN > 5000000 
+     AND EXTRACT(YEAR FROM NGAYTAO) = 2024) H,
+  
+  (SELECT MAKH, HOTEN, DIACHI 
+   FROM CN1.KHACHHANG 
+   WHERE ISDELETE = 0) KH,
+  
+  (SELECT MAHD, MASP, SOLUONG 
+   FROM CN1.CTHD 
+   WHERE ISDELETE = 0) C,
+  
+  (SELECT MASP, TENSANPHAM 
+   FROM CN1.SANPHAM 
+   WHERE ISDELETE = 0 
+     AND THUONGHIEU = 'Yonex') SP
+
+WHERE H.MAHD = C.MAHD 
+  AND H.MAKH = KH.MAKH 
+  AND C.MASP = SP.MASP;
+
+
+-- Xem kế hoạch thực thi
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
+
+
+
